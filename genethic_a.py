@@ -1,6 +1,7 @@
 # Cria uma solucao inicial com as cidades em um ordem aleatoria
 import numpy as np
 from numpy import random
+import random
 
 def converte_vetor_tabuleiro(VT):
     '''
@@ -8,6 +9,7 @@ def converte_vetor_tabuleiro(VT):
     com N rainhas, uma por coluna e retorna 
     uma lista de lista de 0 e 1 representando
     um tabuleiro com as rainhas.
+    
     '''
     N = len(VT)
 
@@ -95,7 +97,7 @@ def conta_ataques(VT):
     retorna o número de pares de rainhas se
     atacando mutuamente nas linhas e diagonais.
     '''
-    ataques  = __conta_ataques_linhas(VT)
+    ataques = __conta_ataques_linhas(VT)
 
     ataques += __conta_ataques_diagonais(VT)
 
@@ -167,20 +169,56 @@ def _selecao(Candidato1, Candidato2):
 
     return eleito
 
+def imprime_tabuleiro(T):
+    for line in T:
+        for elem in line:
+            print(elem, end = ' ')
+        print("")
+    
+
 def algoritmo_genetico():
     # pseudo-código:
 
     # START
     VT = [1,2,3,4,5,6,7,8] # Tabuleiro inicial
+    generations = 50
     T = converte_vetor_tabuleiro(VT)
-    print(T)
+    print("--- Tabuleiro inicial --- \n")
+    print(imprime_tabuleiro(T))
     # Generate the initial population
+    population = gera_tuplas_custos(VT)
+    #print(population)
     # Compute fitness
     # REPEAT
-    #     Selection
-    #     Crossover
-    #     Mutation
-    #     Compute fitness
+    for i in range (0, generations):
+        new_population = []
+        for i in range(0, 10):
+            #     Selection
+            rand_idx_parent1 = random.randrange(len(population))
+            rand_idx_parent2 = random.randrange(len(population))
+            #     Crossover
+            child1, child2 = crossover(population[rand_idx_parent1][1], population[rand_idx_parent2][1])
+            #     Mutation
+            child1 = mutacao(child1)
+            child2 = mutacao(child2)
+            #     ADD to new population
+            new_population.append(child1)
+            new_population.append(child2)
+        # Tournament - seleciona dois candidatos aleatoriamente
+        rand_idx_candidate1 = random.randrange(len(new_population))
+        rand_idx_candidate2 = random.randrange(len(new_population))
+        best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2])
+        #     Compute fitness
+        pop_old = population
+        population = gera_tuplas_custos(best_candidate)
+        if population[0] == 0:
+            break
+    print(pop_old)
+    print(population)
+    print("\n", best_candidate)
+    print("\n")
+    print("--- Tabuleiro final --- \n")
+    print(imprime_tabuleiro(converte_vetor_tabuleiro(best_candidate)))
     # UNTIL population has converged
     # STOP
 
@@ -189,3 +227,6 @@ def algoritmo_genetico():
 def main():
     algoritmo_genetico()
     return 0
+
+if __name__ == "__main__":
+    main()

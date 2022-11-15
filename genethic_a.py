@@ -209,13 +209,13 @@ def algoritmo_genetico():
         rand_idx_candidate2 = random.randrange(len(new_population))
         best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2])
         #     Compute fitness
-        pop_old = population
+        #pop_old = population
         population = gera_tuplas_custos(best_candidate)
         if population[0] == 0:
             break
-    print(pop_old)
-    print(population)
-    print("\n", best_candidate)
+    #print(pop_old)
+    #print(population)
+    #print("\n", best_candidate)
     print("\n")
     print("--- Tabuleiro final --- \n")
     print(imprime_tabuleiro(converte_vetor_tabuleiro(best_candidate)))

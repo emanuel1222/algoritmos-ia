@@ -207,9 +207,9 @@ def algoritmo_genetico(tsp):
     # pseudo-código:
 
     # START
-    solucao = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+    solucao = [11, 27, 21, 10, 4, 9, 24, 7, 29, 18, 19, 25, 3, 23, 22, 14, 5, 13, 15, 2, 6, 1, 16, 8, 17, 28, 26, 12, 20]
     # Generate the initial population # Compute fitness
-    generations = 50
+    generations = 100
     population = gera_tuplas_custos(solucao,tsp)
     #print(population)
     # REPEAT
@@ -251,7 +251,7 @@ def main():
                     skipfooter=1,         # ignora a última linha (EOF)
                     engine='python'       # para o parser usar skipfooter sem warning
               )
-    solucao = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+    solucao = [11, 27, 21, 10, 4, 9, 24, 7, 29, 18, 19, 25, 3, 23, 22, 14, 5, 13, 15, 2, 6, 1, 16, 8, 17, 28, 26, 12, 20]
     tsp = gera_problema_tsp(df_coordenadas)
     plota_rotas(df_coordenadas, solucao)
     custo = calcula_custo(tsp,solucao)
@@ -260,6 +260,8 @@ def main():
     custo_final = calcula_custo(tsp,solucao_final)
     print("--- Custo da solução final: ", custo_final)
     plota_rotas(df_coordenadas, solucao_final)
+    print(solucao_final)
+    print(custo - custo_final)
     return 0
 
 if __name__ == "__main__":

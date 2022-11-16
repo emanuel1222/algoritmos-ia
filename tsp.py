@@ -230,7 +230,7 @@ def algoritmo_genetico(tsp):
 
         rand_idx_candidate1 = random.randrange(len(new_population))
         rand_idx_candidate2 = random.randrange(len(new_population))
-        best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2])
+        best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2],tsp)
     #     Compute fitness
         population = gera_tuplas_custos(best_candidate,tsp)
     # UNTIL population has converged
@@ -253,7 +253,7 @@ def main():
               )
     solucao = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
     tsp = gera_problema_tsp(df_coordenadas)
-    #plota_rotas(df_coordenadas, solucao)
+    plota_rotas(df_coordenadas, solucao)
     custo = calcula_custo(tsp,solucao)
     print("--- Custo da solução inicial: ", custo)
     solucao_final = algoritmo_genetico(tsp)

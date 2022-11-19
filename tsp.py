@@ -10,7 +10,10 @@ import plotly.graph_objects as go
 
 def solucao_aleatoria(tsp):
     cidades = list(tsp.keys())
-    solucao = []
+    solucao = [len(cidades)]
+    
+    cidades.remove(1)
+    solucao[0] = 1
 
     # as 3 linhas abaixo não são estritamente necessarias, servem
     # apenas para fixar a primeira cidade da lista na solução
@@ -200,8 +203,8 @@ def mutacao(VT, p_mutacao=0.30):
     p = np.random.rand()
 
     if p < p_mutacao:
-        cidade1   = np.random.randint(0,N-1)    # indice da coluna (base-0)
-        cidade2 = np.random.randint(0,N-1)  # valor da linha   (base-1)
+        cidade1   = np.random.randint(1,N-1)    # indice da coluna (base-0)
+        cidade2 = np.random.randint(1,N-1)  # valor da linha   (base-1)
         aux = VT_mutated[cidade1]
         VT_mutated[cidade1] = VT_mutated[cidade2]
         VT_mutated[cidade2] = aux

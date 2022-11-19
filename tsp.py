@@ -7,6 +7,26 @@ from collections import deque
 import plotly.express as px
 import plotly.graph_objects as go
 
+
+def solucao_aleatoria(tsp):
+    cidades = list(tsp.keys())
+    solucao = []
+
+    # as 3 linhas abaixo não são estritamente necessarias, servem
+    # apenas para fixar a primeira cidade da lista na solução
+    cidade = cidades[0]
+    solucao.append(cidade)
+    cidades.remove(cidade)
+
+    for _ in range(0,len(cidades)):
+        #print(_, cidades, solucao)
+        cidade = random.choice(cidades)
+
+        solucao.append(cidade)
+        cidades.remove(cidade)
+
+    return solucao
+
 # Calcula matriz de distancias.
 #
 # OBS:  Não é estritamente necessario calculá-las a priori.
@@ -88,26 +108,13 @@ def gera_vizinhos(solucao):
             yield(vizinho)
             
 
-# A partir de uma dada solução, gera diversas variações (vizinhos)
-def gera_vizinhos(solucao):
-
-    N = len(solucao)
-    for i in range(1, N):       # deixa o primeiro fixo
-        for j in range(i + 1, N):
-            vizinho = solucao.copy()
-            vizinho[i] = solucao[j]
-            vizinho[j] = solucao[i]
-
-            yield(vizinho)
-            
-
-def gera_tuplas_custos(solucao, tsp):
+def gera_tuplas_custos(LVT, tsp):
     '''
     Gera tuplas com os custos de todos os individuos da populacao.
     '''
     TuplasCustos = []
-    for individuo in gera_vizinhos(solucao):
-        custo = calcula_custo(tsp, solucao)
+    for individuo in LVT:
+        custo = calcula_custo(tsp, individuo)
         TuplasCustos += [(custo, individuo)]
 
     return TuplasCustos
@@ -202,42 +209,52 @@ def mutacao(VT, p_mutacao=0.30):
         #print(col+1, linha)
 
     return VT_mutated
+
+def gera_populacao_inicial(tsp, N_population):
+    populacao = []
+    for i in range(N_population):
+        populacao.append(solucao_aleatoria(tsp))
+    return populacao
                 
-def algoritmo_genetico(tsp):
+def algoritmo_genetico(tsp, N_generations, N_population):
     # pseudo-código:
 
     # START
-    solucao = [11, 27, 21, 10, 4, 9, 24, 7, 29, 18, 19, 25, 3, 23, 22, 14, 5, 13, 15, 2, 6, 1, 16, 8, 17, 28, 26, 12, 20]
-    # Generate the initial population # Compute fitness
-    generations = 100
-    population = gera_tuplas_custos(solucao,tsp)
+    solucao_inicial = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
+    # Generate the initial population 
+    population = gera_populacao_inicial(tsp,N_population)
     #print(population)
+    # Compute fitness
+    fitness_population = gera_tuplas_custos(population, tsp)
     # REPEAT
-    for i in range (0, generations):
+    for i in range (0, N_generations):
         new_population = []
         for i in range(0, 10):
             #     Selection
-            rand_idx_parent1 = random.randrange(len(population))
-            rand_idx_parent2 = random.randrange(len(population))
+            rand_idx_parent1 = random.randrange(len(fitness_population))
+            rand_idx_parent2 = random.randrange(len(fitness_population))
             #     Crossover
-            child1, child2 = crossoverOX(population[rand_idx_parent1][1], population[rand_idx_parent2][1])
+            child1, child2 = crossoverOX(fitness_population[rand_idx_parent1][1], fitness_population[rand_idx_parent2][1])
             #     Mutation
             child1 = mutacao(child1)
             child2 = mutacao(child2)
+            # Tournament - seleciona dois candidatos aleatoriamente e retorna o melhor
+            best_child = _selecao(child1, child2, tsp)
             #     ADD to new population
-            new_population.append(child1)
-            new_population.append(child2)
+            new_population.append(best_child)
 
-        rand_idx_candidate1 = random.randrange(len(new_population))
-        rand_idx_candidate2 = random.randrange(len(new_population))
-        best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2],tsp)
-    #     Compute fitness
-        population = gera_tuplas_custos(best_candidate,tsp)
+        #     SET new population
+        population = new_population 
+        #     Compute fitness
+        fitness_population = gera_tuplas_custos(population, tsp)
     # UNTIL population has converged
+    # Tournament - seleciona dois candidatos aleatoriamente e retorna o melhor
+    rand_idx_candidate1 = random.randrange(len(population))
+    rand_idx_candidate2 = random.randrange(len(population))
+    solucao_final = _selecao(population[rand_idx_candidate1], population[rand_idx_candidate2], tsp)
     # STOP
-    return best_candidate
-    # coloque seu código aqui
-    pass
+    custo = calcula_custo(tsp,solucao_final)
+    return solucao_final, custo
      
 def main():
     url_coordenadas_cidade = 'http://www.math.uwaterloo.ca/tsp/world/wi29.tsp'
@@ -251,13 +268,12 @@ def main():
                     skipfooter=1,         # ignora a última linha (EOF)
                     engine='python'       # para o parser usar skipfooter sem warning
               )
-    solucao = [11, 27, 21, 10, 4, 9, 24, 7, 29, 18, 19, 25, 3, 23, 22, 14, 5, 13, 15, 2, 6, 1, 16, 8, 17, 28, 26, 12, 20]
+    solucao_inicial = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29]
     tsp = gera_problema_tsp(df_coordenadas)
-    plota_rotas(df_coordenadas, solucao)
-    custo = calcula_custo(tsp,solucao)
+    plota_rotas(df_coordenadas, solucao_inicial)
+    custo = calcula_custo(tsp,solucao_inicial)
     print("--- Custo da solução inicial: ", custo)
-    solucao_final = algoritmo_genetico(tsp)
-    custo_final = calcula_custo(tsp,solucao_final)
+    solucao_final, custo_final = algoritmo_genetico(tsp,50,20)
     print("--- Custo da solução final: ", custo_final)
     plota_rotas(df_coordenadas, solucao_final)
     print(solucao_final)

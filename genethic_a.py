@@ -3,6 +3,27 @@ import numpy as np
 from numpy import random
 import random
 
+# Cria solução aleatória
+
+def solucao_aleatoria(N):
+    rainhas = list(range(1, N+1))
+    solucao = []
+
+    # as 3 linhas abaixo não são estritamente necessarias, servem
+    # apenas para fixar a primeira cidade da lista na solução
+    rainha = rainhas[0]
+    solucao.append(rainha)
+    rainhas.remove(rainha)
+
+    for _ in range(1,len(rainhas)+1):
+        #print(_, rainhas, solucao)
+        rainha = random.choice(rainhas)
+
+        solucao.append(rainha)
+        rainhas.remove(rainha)
+
+    return solucao
+
 def converte_vetor_tabuleiro(VT):
     '''
     Recebe um vetor representando um tabuleiro
@@ -24,25 +45,6 @@ def converte_vetor_tabuleiro(VT):
                 T[lin][col] = 1
 
     return T
-
-def solucao_aleatoria(N):
-    rainhas = list(range(1, N+1))
-    solucao = []
-
-    # as 3 linhas abaixo não são estritamente necessarias, servem
-    # apenas para fixar a primeira cidade da lista na solução
-    rainha = rainhas[0]
-    solucao.append(rainha)
-    rainhas.remove(rainha)
-
-    for _ in range(1,len(rainhas)+1):
-        #print(_, rainhas, solucao)
-        rainha = random.choice(rainhas)
-
-        solucao.append(rainha)
-        rainhas.remove(rainha)
-
-    return solucao
 
 def __conta_ataques_linhas(VT):
     '''
@@ -117,12 +119,12 @@ def gera_vizinhos(VT):
 
                 yield vizinho
 
-def gera_tuplas_custos(VT):
+def gera_tuplas_custos(LVT):
     '''
     Gera tuplas com os custos de todos os individuos da populacao.
     '''
     TuplasCustos = []
-    for individuo in gera_vizinhos(VT):
+    for individuo in LVT:
         ataques = conta_ataques(individuo)
         TuplasCustos += [(ataques, individuo)]
 
@@ -174,58 +176,67 @@ def imprime_tabuleiro(T):
         for elem in line:
             print(elem, end = ' ')
         print("")
+
+def gera_populacao_inicial(N, N_population):
+    populacao = []
+    for i in range(N_population):
+        populacao.append(solucao_aleatoria(N))
+    return populacao
     
 
-def algoritmo_genetico():
+def algoritmo_genetico(N, N_generations, N_population):
     # pseudo-código:
 
     # START
-    VT = [1,2,3,4,5,6,7,8] # Tabuleiro inicial
-    generations = 50
-    T = converte_vetor_tabuleiro(VT)
+    solucao_inicial = [1,2,3,4,5,6,7,8] # Tabuleiro inicial
+    T = converte_vetor_tabuleiro(solucao_inicial)
     print("--- Tabuleiro inicial --- \n")
-    print(imprime_tabuleiro(T))
+    imprime_tabuleiro(T)
     # Generate the initial population
-    population = gera_tuplas_custos(VT)
+    population = gera_populacao_inicial(N, N_population)
     #print(population)
     # Compute fitness
+    fitness_population = gera_tuplas_custos(population)
     # REPEAT
-    for i in range (0, generations):
+    for i in range (0, N_generations):
         new_population = []
         for i in range(0, 10):
             #     Selection
-            rand_idx_parent1 = random.randrange(len(population))
-            rand_idx_parent2 = random.randrange(len(population))
+            rand_idx_parent1 = random.randrange(len(fitness_population))
+            rand_idx_parent2 = random.randrange(len(fitness_population))
             #     Crossover
-            child1, child2 = crossover(population[rand_idx_parent1][1], population[rand_idx_parent2][1])
+            child1, child2 = crossover(fitness_population[rand_idx_parent1][1], fitness_population[rand_idx_parent2][1])
             #     Mutation
             child1 = mutacao(child1)
             child2 = mutacao(child2)
+            # Tournament - seleciona dois candidatos aleatoriamente e retorna o melhor
+            best_child = _selecao(child1, child2)
             #     ADD to new population
-            new_population.append(child1)
-            new_population.append(child2)
-        # Tournament - seleciona dois candidatos aleatoriamente
-        rand_idx_candidate1 = random.randrange(len(new_population))
-        rand_idx_candidate2 = random.randrange(len(new_population))
-        best_candidate = _selecao(new_population[rand_idx_candidate1], new_population[rand_idx_candidate2])
+            new_population.append(best_child)
+            
+        #     SET new population
+        population = new_population 
         #     Compute fitness
-        #pop_old = population
-        population = gera_tuplas_custos(best_candidate)
-        if population[0] == 0:
-            break
+        fitness_population = gera_tuplas_custos(population)
+        
+    # Tournament - seleciona dois candidatos aleatoriamente e retorna o melhor
+    rand_idx_candidate1 = random.randrange(len(population))
+    rand_idx_candidate2 = random.randrange(len(population))
+    solucao_final = _selecao(population[rand_idx_candidate1], population[rand_idx_candidate2])
     #print(pop_old)
     #print(population)
     #print("\n", best_candidate)
     print("\n")
     print("--- Tabuleiro final --- \n")
-    print(imprime_tabuleiro(converte_vetor_tabuleiro(best_candidate)))
+    imprime_tabuleiro(converte_vetor_tabuleiro(solucao_final))
     # UNTIL population has converged
     # STOP
-
-    # coloque seu código aqui
+    ataques = conta_ataques(solucao_final)
+    return solucao_final, ataques
 
 def main():
-    algoritmo_genetico()
+    solucao, ataques = algoritmo_genetico(8, 50)
+    print(ataques)
     return 0
 
 if __name__ == "__main__":

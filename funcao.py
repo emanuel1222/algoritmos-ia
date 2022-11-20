@@ -6,12 +6,11 @@ from numpy import random
 import random
 
 
-# Cria solução aleatória
+# Cria solução aleatória para o algoritmo genetico
 
 def solucao_aleatoria(Intervalos, N):
     V = list(range(Intervalos[0], Intervalos[1]+1))
     solucao = []
-
 
     for _ in range(0,N):
         elem = random.choice(V)
@@ -21,9 +20,18 @@ def solucao_aleatoria(Intervalos, N):
 
     return solucao
 
+# Cria solução aleatória para o algoritmo hill-climbing
+
+def solucao_aleatoria_hc(Intervalos):
+    V = list(range(Intervalos[0], Intervalos[1]+1))
+
+    elem = random.choice(V)
+
+    return elem
+
 
 # A partir de uma dada solução, gera diversas variações (vizinhos)
-def gera_vizinhos(solucao):
+def gera_vizinhos_tst(solucao):
 
     N = len(solucao)
     for i in range(1, N):       # deixa o primeiro fixo
@@ -33,6 +41,31 @@ def gera_vizinhos(solucao):
             vizinho[j] = solucao[i]
 
             yield(vizinho)
+
+# A partir de uma dada solução, gera diversas variações (vizinhos)
+def gera_vizinhos(solucao, sigma=0.1):
+
+    for i in range(0, 2): 
+        dx = solucao + sigma * np.random.randn()
+        yield(dx)
+        
+        
+def gera_vizinhos_sa(solucao, sigma=0.1):
+
+
+    dx = solucao + sigma * np.random.randn()
+    yield(dx)
+    
+def escolheMelhorVizinho_sa(Tuplas):
+    custo = Tuplas[0][0]
+    vizinho = Tuplas[0][1]
+    
+    for c, v in Tuplas:
+        if c <= custo:
+            custo = c
+            vizinho = v
+    
+    return custo, vizinho
             
 def calcula_custo(x):
     '''
@@ -41,6 +74,19 @@ def calcula_custo(x):
     fx = (0.01 * (x**2)) + (10 * math.sin((2 * x - math.pi)/ 2))
 
     return fx
+
+# Escolhe o melhor vizinho
+
+def escolheMelhorVizinho(Tuplas):
+    custo = Tuplas[0][0]
+    vizinho = Tuplas[0][1]
+    
+    for c, v in Tuplas:
+        if c < custo:
+            custo = c
+            vizinho = v
+    
+    return custo, vizinho
             
 
 def gera_tuplas_custos(LVT):
@@ -73,8 +119,6 @@ def mutacao(Media, p_mutacao=0.30, sigma=0.1):
     if p < p_mutacao:
         dx = Media + sigma * np.random.randn()
 
-        #print(col+1, linha)
-
     return dx
 
 def crossover(Parent1, Parent2):
@@ -95,6 +139,74 @@ def gera_populacao_inicial(Intervalos, N_population):
         populacao.append(solucao_aleatoria(Intervalos, N_population))
     return populacao
 
+def hillClimbing(Intervalos):
+    solucao = solucao_aleatoria_hc(Intervalos)
+    custo = calcula_custo(solucao)
+    cont = 0 #
+    #print(str((custo, solucao)) + ' <~ Solução aleatória') #
+
+    while True:
+        vizinhos = list(gera_vizinhos(solucao))
+        Tuplas = gera_tuplas_custos(vizinhos)
+        custoVizinho, vizinho = escolheMelhorVizinho(Tuplas)
+        cont += 1
+        #print(str((custoVizinho, vizinho)) + ' <~ ' + str(cont) + 'º vizinho') #
+
+        if custoVizinho >= custo:
+            break
+        else:
+            solucao = vizinho
+            custo = custoVizinho
+
+    return custo, solucao
+
+# Hill-Climbing com Random Restart
+
+def hillClimbingRandomRestart(Intervalos, restarts):
+    solucao = solucao_aleatoria_hc(Intervalos)
+    custo = calcula_custo(solucao)
+    l = []
+
+    for _ in range(restarts):
+        custoVizinho, vizinho = hillClimbing(Intervalos)
+        if custoVizinho < custo:
+            solucao = vizinho
+            custo = custoVizinho
+        l.append((custoVizinho, vizinho))
+    
+    return custo, solucao, l
+
+
+# Simulated Annealing
+
+def simulatedAnnealing(Intervalos):
+    T = 900
+    solucao = -91#solucao_aleatoria_hc(Intervalos)
+    custo = calcula_custo(solucao)
+
+    while T > 0:
+        vizinhos = list(gera_vizinhos(solucao))
+        Tuplas = gera_tuplas_custos(vizinhos)
+        custoVizinho, vizinho = escolheMelhorVizinho(Tuplas)
+
+        if custoVizinho < custo:
+            solucao = vizinho
+            custo = custoVizinho
+            #print('T = ' + str(T) + ' ~> Encontrou solução melhor')
+        else:
+            p = np.random.rand()
+            prob = T/900
+            #print('p = ' + str(p) + ' - prob = ' + str(prob))
+
+            if p <= prob:
+                solucao = vizinho
+                custo = custoVizinho
+                #print('T = ' + str(T) + ' ~> Aceitou solução pior/igual')
+            '''else:
+                print('T = ' + str(T) + ' ~> Manteve solução')'''
+            T -= 1
+
+    return custo, solucao
 
 def algoritmo_genetico(Intervalos, N_generations, N_population):
     # pseudo-código:
@@ -144,7 +256,13 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
 def main():
     #solucao, ataques = algoritmo_genetico(8, 50)
     Intervalos = [-100,100]
-    solucao, custo = algoritmo_genetico(Intervalos, 50, 20)
+    #solucao, custo = algoritmo_genetico(Intervalos, 50, 20)
+    custo, solucao = hillClimbing(Intervalos)
+    print(solucao, custo)
+    custo, solucao, l = hillClimbingRandomRestart(Intervalos, 20)
+    print(solucao, custo)
+    custo, solucao = simulatedAnnealing(Intervalos) 
+    print(solucao, custo)
     return 0
 
 if __name__ == "__main__":

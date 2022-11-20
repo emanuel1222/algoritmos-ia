@@ -14,7 +14,6 @@ def solucao_aleatoria(Intervalos, N):
 
 
     for _ in range(0,N):
-        #print(_, rainhas, solucao)
         elem = random.choice(V)
 
         solucao.append(elem)
@@ -67,7 +66,7 @@ def _selecao(Candidato1, Candidato2):
 
 def mutacao(Media, p_mutacao=0.30, sigma=0.1):
 
-    dx = Media.copy()
+    dx = Media
 
     p = np.random.rand()
 
@@ -79,9 +78,6 @@ def mutacao(Media, p_mutacao=0.30, sigma=0.1):
     return dx
 
 def crossover(Parent1, Parent2):
-
-    N = len(Parent1)
-
     # ponto de corte
     Alpha = np.random.uniform(0, 1)
 
@@ -96,7 +92,7 @@ def crossover(Parent1, Parent2):
 def gera_populacao_inicial(Intervalos, N_population):
     populacao = []
     for i in range(N_population):
-        populacao.append(solucao_aleatoria(Intervalos))
+        populacao.append(solucao_aleatoria(Intervalos, N_population))
     return populacao
 
 
@@ -105,7 +101,7 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
 
     # START
     # Generate the initial population
-    population = gera_populacao_inicial(Intervalos, N_population) # Tabuleiro inicial
+    population = solucao_aleatoria(Intervalos, N_population) # Tabuleiro inicial
     print(population)
     # Compute fitness
     fitness_population = gera_tuplas_custos(population)
@@ -139,16 +135,16 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
     #print(pop_old)
     #print(population)
     print("\n", solucao_final)
-    print("\n")
     # UNTIL population has converged
     # STOP
     custo = calcula_custo(solucao_final)
+    print(custo)
     return solucao_final, custo
 
 def main():
     #solucao, ataques = algoritmo_genetico(8, 50)
     Intervalos = [-100,100]
-    t = solucao_aleatoria(Intervalos, 20)
+    solucao, custo = algoritmo_genetico(Intervalos, 50, 20)
     return 0
 
 if __name__ == "__main__":

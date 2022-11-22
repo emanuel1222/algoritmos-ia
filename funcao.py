@@ -139,6 +139,36 @@ def gera_populacao_inicial(Intervalos, N_population):
         populacao.append(solucao_aleatoria(Intervalos, N_population))
     return populacao
 
+def seleciona_melhor_elem(fitness_population):
+    best_elem = ()
+    custo = 99999999
+    
+    for elem in fitness_population:
+        if elem[0] < custo:
+            custo = elem[0]
+            best_elem = elem
+    return best_elem
+
+def seleciona_pior_elem(new_population):
+    worst_elem = ()
+    custo = -99999999
+    
+    for elem in new_population:
+        if elem[0] > custo:
+            custo = elem[0]
+            worst_elem = elem
+    return worst_elem
+
+def manter_best_elem_lastGeneation(fitness_population, best_elem_lastGenaration):
+    worst_elem_actualGeneration = seleciona_pior_elem(fitness_population)
+    population = fitness_population.copy()
+    
+    if worst_elem_actualGeneration[0] > best_elem_lastGenaration[0]:
+        idx = fitness_population.index(worst_elem_actualGeneration)
+        population[idx] = best_elem_lastGenaration
+    return population
+
+
 def hillClimbing(Intervalos):
     solucao = solucao_aleatoria_hc(Intervalos)
     custo = calcula_custo(solucao)
@@ -214,14 +244,13 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
     # START
     # Generate the initial population
     population = solucao_aleatoria(Intervalos, N_population) # Tabuleiro inicial
-    print(population)
     # Compute fitness
     fitness_population = gera_tuplas_custos(population)
-    print(fitness_population)
     # REPEAT
     for i in range (0, N_generations):
         new_population = []
-        for i in range(0, 10):
+        best_elem_population = seleciona_melhor_elem(fitness_population)
+        for i in range(0, N_population):
             #     Selection
             rand_idx_parent1 = random.randrange(len(fitness_population))
             rand_idx_parent2 = random.randrange(len(fitness_population))
@@ -239,6 +268,7 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
         population = new_population 
         #     Compute fitness
         fitness_population = gera_tuplas_custos(population)
+        fitness_population = manter_best_elem_lastGeneation(fitness_population, best_elem_population)
         
     # Tournament - seleciona dois candidatos aleatoriamente e retorna o melhor
     rand_idx_candidate1 = random.randrange(len(population))
@@ -246,17 +276,16 @@ def algoritmo_genetico(Intervalos, N_generations, N_population):
     solucao_final = _selecao(population[rand_idx_candidate1], population[rand_idx_candidate2])
     #print(pop_old)
     #print(population)
-    print("\n", solucao_final)
     # UNTIL population has converged
     # STOP
     custo = calcula_custo(solucao_final)
-    print(custo)
     return solucao_final, custo
 
 def main():
     #solucao, ataques = algoritmo_genetico(8, 50)
     Intervalos = [-100,100]
-    #solucao, custo = algoritmo_genetico(Intervalos, 50, 20)
+    solucao, custo = algoritmo_genetico(Intervalos, 50, 20)
+    print(solucao, custo)
     custo, solucao = hillClimbing(Intervalos)
     print(solucao, custo)
     custo, solucao, l = hillClimbingRandomRestart(Intervalos, 20)
